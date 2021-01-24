@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { axiosWithAuth } from '../Utils/axiosWithAuth';
 
 const initialColor = {
   color: "",
@@ -10,31 +10,61 @@ const ColorList = ({ colors, updateColors }) => {
   console.log(colors);
   const [editing, setEditing] = useState(false);
   const [colorToEdit, setColorToEdit] = useState(initialColor);
+  const [adding, setAdding] = useState(false);
 
-  const editColor = color => {
+  const editColor = (color) => {
     setEditing(true);
     setColorToEdit(color);
   };
 
-  const saveEdit = e => {
+  const saveEdit = (e) => {
     e.preventDefault();
     // Make a put request to save your updated color
     // think about where will you get the id from...
     // where is is saved right now?
+    axiosWithAuth().put(`/colors/${colorToEdit.id}`, colorToEdit)
+    .then((res) => {
+      axiosWithAuth().get(`/colors`)
+      .then((res) => {
+        const colors = res.data;
+        updateColors=(colors);
+    })
+      .catch((err) => {
+        console.log(err);
+      })
+    .catch((err) => {
+      console.log("This is bad...,", err);
+      })
+    })
   };
 
   const deleteColor = color => {
     // make a delete request to delete this color
+    axiosWithAuth().delete(`/colors/${colors.id}`)
+    .then((res) => {
+      axiosWithAuth().get(`/colors`)
+      .then((res) => {
+        const color = res.data;
+        updateColors(color);
+      })
+      .catch((err) => {
+        console.log(err);
+      })
+    .catch((err) => {
+      console.log(err);
+    })
+    })
   };
 
   return (
     <div className="colors-wrap">
       <p>colors</p>
+      <button onClick={() => setAdding(true)}>Add a Color</button>
       <ul>
         {colors.map(color => (
           <li key={color.color} onClick={() => editColor(color)}>
             <span>
-              <span className="delete" onClick={e => {
+              <span className="delete" onClick={(e) => {
                     e.stopPropagation();
                     deleteColor(color)
                   }
@@ -56,7 +86,7 @@ const ColorList = ({ colors, updateColors }) => {
           <label>
             color name:
             <input
-              onChange={e =>
+              onChange={(e) =>
                 setColorToEdit({ ...colorToEdit, color: e.target.value })
               }
               value={colorToEdit.color}
